@@ -14,3 +14,18 @@ export const login = async (req, res, next) => {
     next(error);
   }
 };
+
+
+export const getUserDetails = async (req, res) => {
+  try {
+    const user = req.user; // Extracted from the `authMiddleware`
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json({ message: "User details fetched.", user });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user details.", error });
+  }
+};

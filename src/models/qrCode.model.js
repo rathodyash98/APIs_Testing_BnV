@@ -1,22 +1,31 @@
 import mongoose from "mongoose";
 
 const qrCodeSchema = new mongoose.Schema({
-  dynamicId: { 
-    type: String, 
-    unique: true 
-    },
-  initialUrl: { 
-    type: String, 
+  url: {
+     type: String, 
+     required: true
+     },
+  type: { 
+    type: String, enum: ["static", "dynamic"], 
     required: true 
     },
-  updatedUrl: { 
-    type: String 
+  metadata: {
+     type: Object 
+    },
+  qrCodeImage: {
+     type: String 
     },
   owner: {
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true },
-  history: [{ url: String, updatedAt: Date }],
+     type: mongoose.Schema.Types.ObjectId, 
+     ref: "User" 
+    },
+  createdAt: { 
+    type: Date, 
+    default: Date.now 
+  },
+  history: [{
+    url: String, updatedAt: Date 
+  }], // Only for dynamic QR codes
 });
 
 const QRCode = mongoose.model("QRCode", qrCodeSchema);
