@@ -2,10 +2,11 @@ import { Request, Response, NextFunction } from "express";
 import QRCodeModel from "../models/qrCode.model";
 import Event from "../models/Event.model";
 import QRCode from "qrcode";
-import { UserDocument } from "../models/User.model"; // Assuming UserDocument type is exported from User model
+import User from "../models/User.model";
+import { HydratedDocument } from "mongoose";
 
 // Generate a static QR code
-export const generateStaticQRCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const generateStaticQRCode = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
   const { url, metadata } = req.body;
 
   try {
@@ -21,54 +22,67 @@ export const generateStaticQRCode = async (req: Request, res: Response, next: Ne
       qrCodeImage,
     });
 
-    res.status(201).json({ qrCode });
+    return res.status(201).json({ qrCode });
   } catch (error) {
     next(error);
   }
 };
 
 // Generate a dynamic QR code
-export const generateDynamicQRCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const generateDynamicQRCode = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
   const { initialUrl } = req.body;
 
   try {
     const dynamicId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const qrCodeImage = await QRCode.toDataURL(dynamicId);
+
+    const userId = (req.user as typeof User)._id; // Cast req.user to match User model
     const qrCode = await QRCodeModel.create({
       dynamicId,
       initialUrl,
-      owner: (req.user as UserDocument)._id, // Typing req.user for safety
+      owner: userId,
     });
 
-    res.status(201).json({ qrCodeImage, dynamicId });
+    return res.status(201).json({ qrCodeImage, dynamicId });
   } catch (error) {
     next(error);
   }
 };
 
 // Update a dynamic QR code
-export const updateDynamicQRCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const updateDynamicQRCode = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
   const { id } = req.params;
   const { newUrl } = req.body;
 
   try {
-    const qrCode = await QRCodeModel.findOne({ dynamicId: id, owner: (req.user as UserDocument)._id });
+    const userId = (req.user as typeof User)._id; // Cast req.user to match User model
+    const qrCode = (await QRCodeModel.findOne({ dynamicId: id, owner: userId })) as HydratedDocument<IQRCode>;
+
     if (!qrCode) {
       return res.status(404).json({ message: "QR Code not found." });
     }
 
-    qrCode.history.push({ url: qrCode.updatedUrl || qrCode.initialUrl, updatedAt: new Date() });
-    qrCode.updatedUrl = newUrl;
-    await qrCode.save();
+    // Ensure `history` array is initialized
+    if (!qrCode.history) qrCode.history = [];
 
-    res.status(200).json({ message: "QR Code updated successfully." });
+    // Safely access `initialUrl` and `updatedUrl` with proper typing
+    const previousUrl = qrCode.updatedUrl || qrCode.initialUrl;
+    if (!previousUrl) {
+      return res.status(400).json({ message: "QR Code does not have a valid initial URL or updated URL." });
+    }
+
+    qrCode.history.push({ url: previousUrl, updatedAt: new Date() });
+    qrCode.updatedUrl = newUrl;
+
+    await qrCode.save();
+    return res.status(200).json({ message: "QR Code updated successfully." });
   } catch (error) {
     next(error);
   }
 };
 
 // Track an event for a QR code scan
-export const trackEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const trackEvent = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
   const { id } = req.params;
   const { location, device, metadata } = req.body;
 
@@ -85,23 +99,23 @@ export const trackEvent = async (req: Request, res: Response, next: NextFunction
       metadata,
     });
 
-    res.status(201).json({ event });
+    return res.status(201).json({ event });
   } catch (error) {
     next(error);
   }
 };
 
 // Get the user's QR codes
-export const getMyQRCodes = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getMyQRCodes = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
   try {
-    const userId = (req.user as UserDocument)._id; // Ensuring req.user is typed
+    const userId = (req.user as typeof User)._id; // Cast req.user to match User model
     const qrCodes = await QRCodeModel.find({ owner: userId });
 
-    if (!qrCodes || !qrCodes.length) {
+    if (!qrCodes || qrCodes.length === 0) {
       return res.status(404).json({ message: "No QR Codes found." });
     }
 
-    res.status(200).json({ qrCodes });
+    return res.status(200).json({ qrCodes });
   } catch (error) {
     next(error);
   }

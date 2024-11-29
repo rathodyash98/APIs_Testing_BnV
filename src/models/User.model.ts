@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, HookNextFunction } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
 // Define an interface for the User document
@@ -27,23 +27,24 @@ const UserSchema: Schema<IUser> = new Schema({
   },
 });
 
-// Hash password before saving
-UserSchema.pre<IUser>("save", async function (next: HookNextFunction) {
+// Hash password before saving using a better approach
+UserSchema.pre<IUser>("save", async function (next) {
   const user = this;
 
-  // Only hash the password if it has been modified (or is new)
+  // Only hash the password if it's new or modified
   if (!user.isModified("password")) return next();
 
   try {
-    // Generate a salt
+    // Generate salt with a cost factor of 10
     const salt = await bcrypt.genSalt(10);
 
-    // Hash the password using the salt
-    user.password = await bcrypt.hash(user.password, salt);
+    // Hash the password with the generated salt
+    const hashedPassword = await bcrypt.hash(user.password, salt);
+    user.password = hashedPassword; // Assign hashed password to the user
 
-    next();
-  } catch (err) {
-    next(err as Error);
+    next(); // Proceed with saving the user
+  } catch (error) {
+    next(error); // Pass the error to the next middleware
   }
 });
 
@@ -51,6 +52,7 @@ UserSchema.pre<IUser>("save", async function (next: HookNextFunction) {
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
+  // Compare the candidate password with the stored hashed password
   return bcrypt.compare(candidatePassword, this.password);
 };
 

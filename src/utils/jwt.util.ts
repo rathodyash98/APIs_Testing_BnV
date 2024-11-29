@@ -1,5 +1,5 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { JWT_SECRET } from "../config";
+import { JWT_SECRET } from "../config"
 
 // Define the type for the payload, assuming it only includes an `id` field
 interface Payload {
