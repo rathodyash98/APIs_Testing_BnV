@@ -5,7 +5,7 @@ import { connectDatabase } from "./database";
 import { PORT } from "./config";
 import errorMiddleware from "./middlewares/errorHandler.middleware";
 import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./swagger";
+import { swaggerSpec } from "../src/utils/swagger";
 import authRoutes from "./routes/auth.route";
 import qrRoutes from "./routes/qr.route";
 import analyticsRoutes from "./routes/analytics.route";
