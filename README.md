@@ -30,7 +30,7 @@ npm run dev
 
 ### Sample Inputs
 
-#### POST ( /api/addOrders )
+#### POST ( /api/addOrder )
 
 - Request
 
