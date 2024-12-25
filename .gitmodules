@@ -1,0 +1,3 @@
+[submodule "order-management/order-management-systemem"]
+	path = order-management/order-management-systemem
+	url = https://github.com/Rohitshinde23/order-management-system.git
