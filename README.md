@@ -9,16 +9,6 @@ A simple backend application simulating an Order Management System with dynamic 
    ```bash
    npm install
 
-
-Clone the repository:
-
-git clone <repository_url>
-cd order-management-system
-
-Install dependencies:
-
-npm instal
-
 Start the server:
 
 npm start
