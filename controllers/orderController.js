@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 export const placeOrder = (req, res) => {
   const { productName, quantity, pricePerUnit } = req.body;
 
-  // Input validation
   if (!productName || typeof quantity !== 'number' || typeof pricePerUnit !== 'number' ||
       quantity <= 0 || pricePerUnit <= 0) {
     return res.status(400).json({ error: 'Invalid input' });
@@ -32,7 +31,7 @@ export const placeOrder = (req, res) => {
   res.status(201).json(order);
 };
 
-// Get Order Summary by ID
+
 export const getOrderSummary = (req, res) => {
   const order = orders.find((o) => o.id === req.params.id);
 
@@ -43,7 +42,7 @@ export const getOrderSummary = (req, res) => {
   res.json(order);
 };
 
-// Calculate Total Revenue
+
 export const calculateRevenue = (req, res) => {
   const totalRevenue = orders.reduce((sum, order) => sum + order.finalAmount, 0);
   res.json({ totalRevenue });
