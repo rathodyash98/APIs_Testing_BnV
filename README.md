@@ -11,7 +11,7 @@ A simple backend application simulating an Order Management System with dynamic 
 
 Start the server:
 
-npm start
+node app.js
 
 The server will start on http://localhost:3000.
 
